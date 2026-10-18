@@ -64,3 +64,7 @@ src/
 ## 技术栈
 
 [Three.js](https://threejs.org/) r169 · [Vite](https://vitejs.dev/) 5
+
+## 许可证
+
+代码以 [MIT](LICENSE) 协议开源。`public/draco/` 中的 Draco 解码器来自 Google Draco（Apache-2.0）。《黑神话：悟空》及相关角色名称归 Game Science 所有，本项目为非官方致敬作品。
