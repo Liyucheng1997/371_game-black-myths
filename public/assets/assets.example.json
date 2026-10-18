@@ -1,0 +1,44 @@
+{
+  "player": {
+    "model": "/assets/wukong/model.glb",
+    "height": 1.75,
+    "rotationY": 0,
+    "runSpeed": 4.4,
+    "weapon": { "type": "staff", "offset": [0, 0.08, 0.02], "rotation": [0, 0, 90], "slide": -0.5 },
+    "anims": {
+      "idle":    { "file": "/assets/wukong/anims/idle.fbx" },
+      "run":     { "file": "/assets/wukong/anims/run.fbx" },
+      "sprint":  { "file": "/assets/wukong/anims/sprint.fbx" },
+      "attack1": { "file": "/assets/wukong/anims/attack1.fbx" },
+      "attack2": { "file": "/assets/wukong/anims/attack2.fbx" },
+      "attack3": { "file": "/assets/wukong/anims/attack3.fbx" },
+      "attack4": { "file": "/assets/wukong/anims/attack4.fbx", "speed": 1.1 },
+      "charge":  { "file": "/assets/wukong/anims/charge.fbx", "trim": [0, 0.6] },
+      "heavy":   { "file": "/assets/wukong/anims/heavy.fbx", "hit": [[0.55, 0.7, 1]], "events": [{ "t": 0.62, "type": "impact", "power": 1 }] },
+      "dodge":   { "file": "/assets/wukong/anims/dodge.fbx" },
+      "hit":     { "file": "/assets/wukong/anims/hit.fbx" },
+      "drink":   { "file": "/assets/wukong/anims/drink.fbx" },
+      "spell":   { "file": "/assets/wukong/anims/spell.fbx" },
+      "death":   { "file": "/assets/wukong/anims/death.fbx" },
+      "victory": { "file": "/assets/wukong/anims/victory.fbx" }
+    }
+  },
+  "enemy": {
+    "enabled": false,
+    "model": "/assets/wolf/model.glb",
+    "height": 2.15,
+    "weapon": { "type": "sabre" },
+    "anims": {
+      "idle":   { "file": "/assets/wolf/anims/idle.fbx" },
+      "run":    { "file": "/assets/wolf/anims/run.fbx" },
+      "slash1": { "file": "/assets/wolf/anims/slash1.fbx" },
+      "slash2": { "file": "/assets/wolf/anims/slash2.fbx" },
+      "leap":   { "file": "/assets/wolf/anims/leap.fbx" },
+      "spin":   { "file": "/assets/wolf/anims/spin.fbx" },
+      "hit":    { "file": "/assets/wolf/anims/hit.fbx" },
+      "stagger":{ "file": "/assets/wolf/anims/stagger.fbx" },
+      "death":  { "file": "/assets/wolf/anims/death.fbx" },
+      "roar":   { "file": "/assets/wolf/anims/roar.fbx" }
+    }
+  }
+}

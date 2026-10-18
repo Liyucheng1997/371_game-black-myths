@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.claude/
+*.log
+.DS_Store
+Thumbs.db
+# 外部授权资产默认不入库（许可证通常不允许再分发）
+public/assets/*
+!public/assets/assets.example.json
+!public/assets/使用说明.md

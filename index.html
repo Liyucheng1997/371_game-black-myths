@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>天命 · 程序化战斗演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --gold: #d9b45c; --gold2: #f3d58a; --ink: #0b0907; --paper: #e8dcc2; --red: #8e1d14; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--paper); font-family: 'Noto Serif SC', 'SimSun', serif; user-select: none; }
+  canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .cal { font-family: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif; }
+  .hidden { display: none !important; }
+
+  /* 加载 / 标题 */
+  #loading, #title { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20;
+    background: radial-gradient(ellipse at 50% 45%, rgba(40,28,16,0.55), rgba(0,0,0,0.92) 70%); }
+  #loading { background: #050403; }
+  .title-big { font-size: clamp(64px, 11vw, 150px); letter-spacing: 0.08em; color: var(--paper); text-shadow: 0 0 40px rgba(0,0,0,.9), 0 0 2px #000; line-height: 1; }
+  .title-big span { color: var(--gold); }
+  .subtitle { margin-top: 18px; font-size: 15px; letter-spacing: 0.5em; color: #b9a98a; opacity: .85; }
+  .note { margin-top: 10px; font-size: 12px; letter-spacing: 0.2em; color: #8d806a; }
+  #load-bar { width: min(420px, 70vw); height: 2px; background: rgba(255,255,255,.08); margin-top: 46px; position: relative; overflow: hidden; }
+  #load-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, transparent, var(--gold)); transition: width .25s; }
+  #load-text { margin-top: 14px; font-size: 13px; letter-spacing: .3em; color: #9b8d74; }
+  .menu { margin-top: 56px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .btn { font-family: 'Ma Shan Zheng', 'KaiTi', serif; font-size: 30px; letter-spacing: .4em; padding: 6px 28px 6px 40px; color: var(--paper); background: none; border: none; cursor: pointer; position: relative; transition: color .2s, text-shadow .2s; }
+  .btn:hover { color: var(--gold2); text-shadow: 0 0 18px rgba(217,180,92,.6); }
+  .btn::before { content: ''; position: absolute; left: 0; top: 50%; width: 14px; height: 14px; transform: translate(0,-50%) rotate(45deg) scale(0); border: 1px solid var(--gold); transition: transform .2s; }
+  .btn:hover::before { transform: translate(0,-50%) rotate(45deg) scale(1); }
+  .controls { margin-top: 44px; display: grid; grid-template-columns: repeat(4, auto); gap: 8px 26px; font-size: 13px; color: #a89a80; letter-spacing: .1em; }
+  .controls b { color: var(--gold); font-weight: 400; margin-right: 6px; font-family: monospace; font-size: 13px; }
+
+  /* HUD */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  #pbars { position: absolute; left: 4.2vw; bottom: 6.5vh; width: min(380px, 34vw); }
+  .bar { position: relative; height: 5px; background: rgba(0,0,0,.55); margin-top: 6px; box-shadow: 0 0 0 1px rgba(255,255,255,.07); }
+  .bar .ghost, .bar .fill { position: absolute; inset: 0 auto 0 0; }
+  .bar .ghost { background: rgba(255,230,200,.45); transition: width .6s .25s; }
+  #hp { height: 7px; }
+  #hp .fill { background: linear-gradient(180deg, #f2ede4, #c9c1b3); }
+  #mp .fill { background: linear-gradient(180deg, #6f9ad6, #3d6aaa); }
+  #st .fill { background: linear-gradient(180deg, #e8c46a, #b48a32); }
+  #pname { font-size: 15px; letter-spacing: .3em; color: #d7cbb2; margin-bottom: 4px; text-shadow: 0 0 6px #000; }
+  #focus { position: absolute; right: 5vw; bottom: 9vh; display: flex; gap: 10px; align-items: center; }
+  .pip { width: 16px; height: 16px; transform: rotate(45deg); border: 1px solid rgba(217,180,92,.6); background: rgba(0,0,0,.4); position: relative; overflow: hidden; }
+  .pip i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(0deg, #f6d27a, #fff3c8); box-shadow: 0 0 10px #f6d27a; }
+  .pip.full { box-shadow: 0 0 12px rgba(246,210,122,.8); }
+  #items { position: absolute; right: 5vw; bottom: 14vh; display: flex; gap: 16px; }
+  .slot { width: 58px; height: 58px; border: 1px solid rgba(217,180,92,.35); background: rgba(10,8,6,.55); display: flex; align-items: center; justify-content: center; position: relative; font-size: 26px; }
+  .slot .k { position: absolute; left: 4px; top: 2px; font-size: 10px; color: #a99; font-family: monospace; }
+  .slot .n { position: absolute; right: 4px; bottom: 1px; font-size: 13px; color: var(--paper); }
+  .slot .cd { position: absolute; inset: auto 0 0 0; background: rgba(0,0,0,.65); height: 0; }
+  #boss { position: absolute; left: 50%; bottom: 7.5vh; width: min(760px, 56vw); transform: translateX(-50%); transition: opacity .6s; }
+  #bname { font-size: 26px; letter-spacing: .25em; text-align: center; margin-bottom: 6px; color: #e7dcc5; text-shadow: 0 0 10px #000; }
+  #bhp { height: 7px; }
+  #bhp .fill { background: linear-gradient(180deg, #e9e2d6, #b3a993); }
+  #bpo { height: 3px; margin-top: 3px; }
+  #bpo .fill { background: linear-gradient(90deg, #a0601a, #f0b040); }
+  #msg { position: absolute; left: 0; right: 0; top: 34vh; text-align: center; font-size: clamp(60px, 9vw, 120px); color: var(--paper); opacity: 0; transition: opacity .8s, letter-spacing 1.6s; letter-spacing: .1em; text-shadow: 0 0 30px rgba(0,0,0,.9); }
+  #msg.show { opacity: 1; letter-spacing: .35em; }
+  #msg small { display: block; font-size: 16px; letter-spacing: .5em; margin-top: 18px; color: #b8a888; font-family: 'Noto Serif SC', serif; }
+  #toast { position: absolute; left: 50%; top: 18vh; transform: translateX(-50%); font-size: 22px; letter-spacing: .4em; color: var(--gold2); opacity: 0; transition: opacity .3s; text-shadow: 0 0 12px rgba(0,0,0,.9); }
+  #dmg { position: absolute; inset: 0; }
+  .dn { position: absolute; font-family: 'Noto Serif SC', serif; font-weight: 700; color: #fff; text-shadow: 0 0 4px #000, 0 0 2px #000; transform: translate(-50%, -50%); white-space: nowrap; }
+  .dn.crit { color: var(--gold2); font-size: 1.4em; }
+  #help { position: absolute; right: 18px; top: 16px; font-size: 12px; color: #9a8d78; text-align: right; line-height: 1.8; letter-spacing: .08em; text-shadow: 0 0 4px #000; }
+  #help b { color: var(--gold); font-family: monospace; font-weight: 400; }
+  #fps { position: absolute; left: 12px; top: 10px; font-size: 11px; color: #776; font-family: monospace; }
+  #lockmark { position: absolute; width: 10px; height: 10px; border: 1px solid #fff; transform: translate(-50%,-50%) rotate(45deg); box-shadow: 0 0 8px #fff; display: none; }
+
+  /* 鉴赏模式 */
+  #showcase { position: fixed; right: 24px; top: 50%; transform: translateY(-50%); z-index: 15; display: flex; flex-direction: column; gap: 6px; }
+  #showcase h3 { font-family: 'Ma Shan Zheng', 'KaiTi', serif; font-weight: 400; font-size: 28px; color: var(--gold); letter-spacing: .3em; margin-bottom: 8px; text-align: right; }
+  #showcase button { pointer-events: auto; font-family: 'Noto Serif SC', serif; font-size: 14px; letter-spacing: .25em; padding: 7px 16px; background: rgba(10,8,6,.6); color: var(--paper); border: 1px solid rgba(217,180,92,.25); cursor: pointer; text-align: right; }
+  #showcase button:hover, #showcase button.on { border-color: var(--gold); color: var(--gold2); }
+  #showcase .sep { height: 10px; }
+  #sc-hint { position: fixed; left: 24px; bottom: 22px; z-index: 15; font-size: 13px; color: #a89a80; letter-spacing: .15em; line-height: 1.9; }
+  #asset-panel { position: fixed; left: 20px; top: 20px; z-index: 16; max-width: min(560px, 46vw); display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  #asset-panel button { pointer-events: auto; font-family: 'Noto Serif SC', serif; font-size: 13px; letter-spacing: .15em; padding: 6px 14px; background: rgba(10,8,6,.7); color: var(--paper); border: 1px solid rgba(217,180,92,.35); cursor: pointer; }
+  #asset-panel pre { font-size: 11px; line-height: 1.5; max-height: 52vh; overflow: auto; background: rgba(5,4,3,.82); border: 1px solid rgba(217,180,92,.2); padding: 10px 12px; color: #d8ccb2; white-space: pre-wrap; font-family: Consolas, monospace; }
+  #asset-panel .wtune { background: rgba(5,4,3,.8); border: 1px solid rgba(217,180,92,.25); padding: 10px 12px; display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 12px; }
+  #asset-panel .wtune b { color: var(--gold); font-weight: 400; margin-bottom: 4px; }
+  #asset-panel .wtune label { display: flex; justify-content: space-between; gap: 12px; }
+  #asset-panel .wtune input { width: 80px; background: #111; color: #eee; border: 1px solid #444; padding: 2px 4px; }
+  #vignette-ink { position: fixed; inset: 0; pointer-events: none; z-index: 9; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.35) 100%); }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="vignette-ink"></div>
+
+<div id="loading">
+  <div class="title-big cal">天<span>命</span></div>
+  <div class="subtitle">程序化战斗演示</div>
+  <div id="load-bar"><div id="load-fill"></div></div>
+  <div id="load-text">正在铸造金箍</div>
+</div>
+
+<div id="title" class="hidden">
+  <div class="title-big cal">天<span>命</span></div>
+  <div class="subtitle">致敬《黑神话：悟空》· 程序化战斗演示</div>
+  <div class="note">模型 · 毛发 · 贴图 · 布料 · 动画 · 音效 —— 全部由代码实时生成，零外部资产</div>
+  <div class="note" id="asset-mode"></div>
+  <div class="menu">
+    <button class="btn" id="btn-start">踏 入 黑 风 山</button>
+    <button class="btn" id="btn-show">形 神 鉴 赏</button>
+  </div>
+  <div class="controls">
+    <span><b>WASD</b>移动</span><span><b>Shift</b>疾跑</span><span><b>空格</b>闪身</span><span><b>Q</b>锁定</span>
+    <span><b>左键</b>轻棍连击</span><span><b>右键长按</b>蓄力劈棍</span><span><b>1 / F</b>定身法</span><span><b>R</b>饮葫芦</span>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="fps"></div>
+  <div id="help"><b>左键</b> 轻棍 · <b>右键长按</b> 蓄力劈棍 · <b>空格</b> 闪身 · <b>1/F</b> 定身法 · <b>R</b> 葫芦 · <b>Q</b> 锁定 · <b>Esc</b> 菜单</div>
+  <div id="pbars">
+    <div id="pname" class="cal">天 命 人</div>
+    <div class="bar" id="hp"><div class="ghost"></div><div class="fill"></div></div>
+    <div class="bar" id="mp"><div class="ghost"></div><div class="fill"></div></div>
+    <div class="bar" id="st"><div class="ghost"></div><div class="fill"></div></div>
+  </div>
+  <div id="items">
+    <div class="slot" id="slot-spell"><span class="k">1</span><span class="cal" style="color:#f0cf7a">定</span><div class="cd"></div></div>
+    <div class="slot" id="slot-gourd"><span class="k">R</span><span>🏺</span><span class="n" id="gourd-n">4</span></div>
+  </div>
+  <div id="focus"><div class="pip"><i></i></div><div class="pip"><i></i></div><div class="pip"><i></i></div><div class="pip"><i></i></div></div>
+  <div id="boss">
+    <div id="bname" class="cal">苍 狼 校 卫</div>
+    <div class="bar" id="bhp"><div class="ghost"></div><div class="fill"></div></div>
+    <div class="bar" id="bpo"><div class="fill"></div></div>
+  </div>
+  <div id="toast" class="cal"></div>
+  <div id="dmg"></div>
+  <div id="lockmark"></div>
+  <div id="msg" class="cal"></div>
+</div>
+
+<div id="showcase" class="hidden"></div>
+<div id="sc-hint" class="hidden">鼠标拖拽 旋转 · 滚轮 缩放 · Esc 返回</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
