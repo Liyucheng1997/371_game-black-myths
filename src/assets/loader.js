@@ -18,7 +18,7 @@ function gltfLoader() {
   if (gltf) return gltf;
   gltf = new GLTFLoader();
   const draco = new DRACOLoader();
-  draco.setDecoderPath('/draco/');
+  draco.setDecoderPath('draco/');
   gltf.setDRACOLoader(draco);
   gltf.setMeshoptDecoder(MeshoptDecoder);
   return gltf;
@@ -47,7 +47,7 @@ export function loadFile(url, hint) {
 
 export async function loadAssetConfig() {
   try {
-    const r = await fetch('/assets/assets.json', { cache: 'no-store' });
+    const r = await fetch('assets/assets.json', { cache: 'no-store' });
     if (!r.ok) return null;
     const txt = await r.text();
     if (txt.trim().startsWith('<')) return null; // Vite 对不存在文件回退为 index.html
